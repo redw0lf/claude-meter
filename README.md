@@ -204,6 +204,52 @@ Service layout:
 On macOS the agent restarts automatically (`KeepAlive=true`,
 throttled to 10s); on Linux systemd is `Restart=on-failure` with a
 10s backoff.
+### Restart the service
+
+If the service gets stuck (e.g. extended upstream errors) and you
+want to kick it without re-registering the unit, restart it in place:
+
+**macOS** (launchd):
+
+```bash
+launchctl kickstart -k gui/$(id -u)/com.claude-meter
+```
+
+`-k` sends SIGTERM to the running process first, then launchd
+respawns it. Confirm a fresh PID with:
+
+```bash
+launchctl list | grep claude-meter
+```
+
+**Linux** (systemd user unit):
+
+```bash
+systemctl --user restart claude-meter
+systemctl --user status claude-meter
+```
+
+Heavier alternative on either platform — fully re-register the unit
+file (use this after editing the plist/service template):
+
+```bash
+claude-meter uninstall-service && claude-meter install-service
+claude-meter service-status
+```
+### Watch the logs
+
+**macOS:**
+
+```bash
+tail -f ~/Library/Logs/claude-meter/claude-meter.out.log
+tail -f ~/Library/Logs/claude-meter/claude-meter.err.log
+```
+
+**Linux:**
+
+```bash
+journalctl --user -u claude-meter -f
+```
 
 ---
 
