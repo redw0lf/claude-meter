@@ -100,7 +100,7 @@ class CopilotProvider:
             acc_note = "no data"
 
         return ServiceCard(
-            title="Copilot",
+            title=f"Copilot/{self._org}",
             row1_label="accept", row1_pct=acc_pct,  row1_note=acc_note,
             row2_label="seats",  row2_pct=seat_pct, row2_note=seat_note,
         )
