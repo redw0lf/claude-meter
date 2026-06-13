@@ -46,7 +46,7 @@ def _cmd_configure(args) -> int:
     if args.github_token:
         cfg.github_token = args.github_token
     if args.copilot_org:
-        cfg.copilot_org = args.copilot_org
+        cfg.copilot_orgs = [o.strip() for o in args.copilot_org.split(",") if o.strip()]
     p = config.save(cfg)
     print(f"wrote {p}")
     print(json.dumps(asdict(cfg), indent=2))
@@ -145,9 +145,10 @@ def build_parser() -> argparse.ArgumentParser:
                     help="GitHub PAT required for the 'copilot' service "
                          "(scope: manage_billing:copilot or read:user)")
     pc.add_argument("--copilot-org",  dest="copilot_org",
-                    help="GitHub org name for Copilot org-plan metrics "
-                         "(seat utilization + acceptance rate). Omit for "
-                         "individual subscription status.")
+                    help="comma-separated GitHub org names for Copilot org-plan "
+                         "metrics (seat utilization + acceptance rate). Each org "
+                         "becomes its own cycling slot. Omit for individual "
+                         "subscription status.")
     pc.set_defaults(func=_cmd_configure)
 
     sub.add_parser("install-service",

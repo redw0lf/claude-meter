@@ -23,9 +23,9 @@ class Config:
     force_push_sec:    int = 600
     image_dwell_sec:   int = 30         # geekmagic-ultra: seconds to show image before restoring weather (0 = stay on image)
     theme_switch:      str = "client"   # geekmagic-ultra: "client" flips themes itself; "firmware" leaves switching to the device's own auto-rotation
-    services:     List[str] = field(default_factory=lambda: ["claude"])
-    github_token: str = ""              # GitHub PAT for the Copilot provider
-    copilot_org:  str = ""              # GitHub org for Copilot org-plan metrics (optional)
+    services:      List[str] = field(default_factory=lambda: ["claude"])
+    github_token:  str = ""             # GitHub PAT for the Copilot provider
+    copilot_orgs:  List[str] = field(default_factory=list)  # one entry per org; empty = individual subscription
 
     @classmethod
     def defaults(cls) -> "Config":
@@ -55,6 +55,9 @@ def load(path: Optional[pathlib.Path] = None) -> Config:
     for k, v in data.items():
         if k in valid:
             setattr(cfg, k, v)
+    # Migrate old single-org key written by a previous version.
+    if "copilot_org" in data and data["copilot_org"] and not cfg.copilot_orgs:
+        cfg.copilot_orgs = [data["copilot_org"]]
     return cfg
 
 

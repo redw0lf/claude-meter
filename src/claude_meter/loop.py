@@ -24,7 +24,7 @@ def run(cfg: Config) -> None:
         image_dwell_sec=cfg.image_dwell_sec,
         theme_switch=cfg.theme_switch,
     )
-    provider_list = [providers.get(svc, cfg) for svc in cfg.services]
+    provider_list = providers.get_all(cfg)
 
     # Per-provider dedup state.
     last_keys:    list[tuple | None] = [None] * len(provider_list)
