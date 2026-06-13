@@ -60,6 +60,8 @@ def _cmd_configure(args) -> int:
         cfg.copilot_orgs = orgs
         if tokens:
             cfg.copilot_org_tokens.update(tokens)
+    if args.copilot_level:
+        cfg.copilot_api_level = args.copilot_level
     p = config.save(cfg)
     print(f"wrote {p}")
     print(json.dumps(asdict(cfg), indent=2))
@@ -157,12 +159,17 @@ def build_parser() -> argparse.ArgumentParser:
     pc.add_argument("--github-token", dest="github_token",
                     help="GitHub PAT required for the 'copilot' service "
                          "(scope: manage_billing:copilot or read:user)")
+    pc.add_argument("--copilot-level", dest="copilot_level",
+                    choices=["org", "enterprise"],
+                    help="API level for Copilot metrics: 'org' uses "
+                         "/orgs/{slug}/copilot/..., 'enterprise' (default) uses "
+                         "/enterprises/{slug}/copilot/... (requires enterprise-owner PAT)")
     pc.add_argument("--copilot-org",  dest="copilot_org",
-                    help="comma-separated GitHub org names for Copilot org-plan "
-                         "metrics (seat utilization + acceptance rate). Each org "
-                         "becomes its own cycling slot. Append :token to supply "
-                         "a per-org PAT (e.g. org-a:ghp_xxx,org-b:ghp_yyy); "
-                         "orgs without a token fall back to --github-token. "
+                    help="comma-separated org/enterprise slugs for Copilot metrics "
+                         "(seat utilization + acceptance rate). Each slug becomes "
+                         "its own cycling slot. Append :token for a per-slug PAT "
+                         "(e.g. my-ent:ghp_xxx,other-ent:ghp_yyy); slugs without "
+                         "a token fall back to --github-token. "
                          "Omit entirely for individual subscription status.")
     pc.set_defaults(func=_cmd_configure)
 

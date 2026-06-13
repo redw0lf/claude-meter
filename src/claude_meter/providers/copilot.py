@@ -1,18 +1,21 @@
 """GitHub Copilot provider.
 
-Two modes depending on whether `copilot_org` is set:
+Three modes controlled by the slug and api_level:
 
-Individual (no org)
+Individual (slug="")
   GET /user/copilot_billing
   row1 = seat active (100 / 0), row2 = IDE chat enabled (100 / 0)
 
-Org plan
-  GET /orgs/{org}/copilot/billing  — seat utilization
-  GET /orgs/{org}/copilot/usage    — 28-day acceptance rate
-  row1 = acceptance rate %, row2 = seat utilization %
+Org plan (api_level="org")
+  GET /orgs/{slug}/copilot/billing  — seat utilization
+  GET /orgs/{slug}/copilot/usage    — 28-day acceptance rate
 
-Requires a GitHub PAT with the `manage_billing:copilot` scope (org plan)
-or `read:user` (individual).
+Enterprise (api_level="enterprise")
+  GET /enterprises/{slug}/copilot/billing  — seat utilization
+  GET /enterprises/{slug}/copilot/usage    — 28-day acceptance rate
+
+Org and enterprise return identical response shapes; only the URL prefix
+differs. Enterprise requires an enterprise-owner PAT.
 """
 from __future__ import annotations
 
@@ -38,7 +41,7 @@ def _gh_get(path: str, token: str) -> dict | list:
 
 
 class CopilotProvider:
-    def __init__(self, token: str, org: str = ""):
+    def __init__(self, token: str, org: str = "", level: str = "enterprise"):
         if not token:
             raise ValueError(
                 "github_token is required for the Copilot provider. "
@@ -46,10 +49,17 @@ class CopilotProvider:
             )
         self._token = token
         self._org   = org
+        self._level = level   # "org" or "enterprise"
+
+    @property
+    def _prefix(self) -> str:
+        if self._level == "org":
+            return f"/orgs/{self._org}"
+        return f"/enterprises/{self._org}"
 
     def fetch(self) -> ServiceCard:
         if self._org:
-            return self._fetch_org()
+            return self._fetch_account()
         return self._fetch_individual()
 
     def _fetch_individual(self) -> ServiceCard:
@@ -79,8 +89,8 @@ class CopilotProvider:
             row2_label="chat", row2_pct=chat_pct, row2_note=chat_note,
         )
 
-    def _fetch_org(self) -> ServiceCard:
-        billing = _gh_get(f"/orgs/{self._org}/copilot/billing", self._token)
+    def _fetch_account(self) -> ServiceCard:
+        billing = _gh_get(f"{self._prefix}/copilot/billing", self._token)
         seats   = (billing.get("seat_breakdown") or {}) if isinstance(billing, dict) else {}
         total   = seats.get("total", 0) or 0
         active  = seats.get("active_this_cycle", 0) or 0
@@ -88,7 +98,7 @@ class CopilotProvider:
         seat_note = f"{active}/{total}"
 
         usage_list = _gh_get(
-            f"/orgs/{self._org}/copilot/usage?per_page=28", self._token
+            f"{self._prefix}/copilot/usage?per_page=28", self._token
         )
         if isinstance(usage_list, list) and usage_list:
             total_sugg = sum(d.get("total_suggestions_count", 0) for d in usage_list)

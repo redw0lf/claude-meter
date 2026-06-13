@@ -25,8 +25,9 @@ class Config:
     theme_switch:      str = "client"   # geekmagic-ultra: "client" flips themes itself; "firmware" leaves switching to the device's own auto-rotation
     services:           List[str]        = field(default_factory=lambda: ["claude"])
     github_token:       str              = ""    # default GitHub PAT; used when no per-org token is set
-    copilot_orgs:       List[str]        = field(default_factory=list)  # one entry per org; empty = individual subscription
-    copilot_org_tokens: Dict[str, str]   = field(default_factory=dict)  # org → PAT overrides
+    copilot_api_level:  str              = "enterprise"  # "org" or "enterprise"
+    copilot_orgs:       List[str]        = field(default_factory=list)  # slugs for the chosen api level; empty = individual subscription
+    copilot_org_tokens: Dict[str, str]   = field(default_factory=dict)  # slug → PAT overrides
 
     @classmethod
     def defaults(cls) -> "Config":
