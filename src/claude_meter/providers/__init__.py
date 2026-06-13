@@ -38,7 +38,8 @@ def get_all(cfg: Config) -> list[Provider]:
         elif svc == "copilot":
             orgs = cfg.copilot_orgs or [""]   # "" = individual subscription
             for org in orgs:
-                result.append(CopilotProvider(token=cfg.github_token, org=org))
+                token = cfg.copilot_org_tokens.get(org) or cfg.github_token
+                result.append(CopilotProvider(token=token, org=org))
         else:
             raise ValueError(f"unknown provider: {svc!r}")
     return result

@@ -11,7 +11,7 @@ import json
 import os
 import pathlib
 from dataclasses import asdict, dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -23,9 +23,10 @@ class Config:
     force_push_sec:    int = 600
     image_dwell_sec:   int = 30         # geekmagic-ultra: seconds to show image before restoring weather (0 = stay on image)
     theme_switch:      str = "client"   # geekmagic-ultra: "client" flips themes itself; "firmware" leaves switching to the device's own auto-rotation
-    services:      List[str] = field(default_factory=lambda: ["claude"])
-    github_token:  str = ""             # GitHub PAT for the Copilot provider
-    copilot_orgs:  List[str] = field(default_factory=list)  # one entry per org; empty = individual subscription
+    services:           List[str]        = field(default_factory=lambda: ["claude"])
+    github_token:       str              = ""    # default GitHub PAT; used when no per-org token is set
+    copilot_orgs:       List[str]        = field(default_factory=list)  # one entry per org; empty = individual subscription
+    copilot_org_tokens: Dict[str, str]   = field(default_factory=dict)  # org → PAT overrides
 
     @classmethod
     def defaults(cls) -> "Config":
