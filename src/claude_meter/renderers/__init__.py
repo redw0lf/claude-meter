@@ -1,9 +1,12 @@
-"""Renderers produce a displayable asset from usage percentages."""
+"""Renderers produce a displayable asset from a ServiceCard."""
 from __future__ import annotations
 
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from PIL import ImageFont
+
+if TYPE_CHECKING:
+    from claude_meter.providers import ServiceCard
 
 # Shared palette
 COLOR_BG     = (0, 0, 0)
@@ -40,10 +43,9 @@ def load_font(size: int) -> ImageFont.ImageFont:
 
 
 class Renderer(Protocol):
-    """A Renderer turns usage percentages into bytes for a transport."""
+    """A Renderer turns a ServiceCard into bytes for a transport."""
 
-    def render(self, five_pct: float, five_reset: str,
-               week_pct: float, week_reset: str) -> bytes: ...
+    def render(self, card: "ServiceCard") -> bytes: ...
 
 
 def get(mode: str) -> Renderer:

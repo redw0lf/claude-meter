@@ -1,7 +1,11 @@
 """80x80 JPEG that lives in the GeeKmagic clock's Customization-GIF slot.
 
-Fits alongside the device's stock clock + weather display. Percentages
-shown as numbers with thin progress bars under each row.
+Layout (80×80 px):
+  y=0   service title  (9 px font, dim)
+  y=11  row 1 label + percentage  (10/18 px fonts)
+  y=31  bar 1  (5 px tall)
+  y=43  row 2 label + percentage
+  y=63  bar 2  (5 px tall)
 """
 from __future__ import annotations
 
@@ -9,6 +13,7 @@ import io
 
 from PIL import Image, ImageDraw
 
+from claude_meter.providers import ServiceCard
 from claude_meter.renderers import (
     COLOR_BG, COLOR_DIM, COLOR_TRACK, bar_color, load_font,
 )
@@ -36,15 +41,15 @@ CHROMA_QTABLE = [
 
 
 class Gif80Renderer:
-    """Renders an 80x80 JPEG frame (no container wrapping — transport does that)."""
-
-    def render(self, five_pct: float, five_reset: str,
-               week_pct: float, week_reset: str) -> bytes:
+    def render(self, card: ServiceCard) -> bytes:
         img  = Image.new("RGB", DISPLAY_SIZE, COLOR_BG)
         draw = ImageDraw.Draw(img)
 
-        font_lbl = load_font(12)
-        font_pct = load_font(20)
+        font_title = load_font(9)
+        font_lbl   = load_font(10)
+        font_pct   = load_font(18)
+
+        draw.text((4, 0), card.title, font=font_title, fill=COLOR_DIM)
 
         def draw_row(y: int, label: str, pct: float):
             pct_clamped = max(0.0, min(pct, 999.0))
@@ -54,19 +59,18 @@ class Gif80Renderer:
 
             draw.text((4, y), label, font=font_lbl, fill=COLOR_DIM)
             pct_w = int(font_pct.getlength(pct_text))
-            draw.text((76 - pct_w, y - 2), pct_text, font=font_pct, fill=color)
+            draw.text((76 - pct_w, y - 1), pct_text, font=font_pct, fill=color)
 
-            bar_y = y + 22
-            draw.rectangle([4, bar_y, 76, bar_y + 6], fill=COLOR_TRACK)
+            bar_y = y + 20
+            draw.rectangle([4, bar_y, 76, bar_y + 5], fill=COLOR_TRACK)
             filled = int(72 * bar_pct / 100)
             if filled > 0:
-                draw.rectangle([4, bar_y, 4 + filled, bar_y + 6], fill=color)
+                draw.rectangle([4, bar_y, 4 + filled, bar_y + 5], fill=color)
 
-        draw_row(2,  "5h", five_pct)
-        draw_row(42, "7d", week_pct)
+        draw_row(11, card.row1_label, card.row1_pct)
+        draw_row(43, card.row2_label, card.row2_pct)
 
         buf = io.BytesIO()
         img.save(buf, format="JPEG", qtables=[LUMA_QTABLE, CHROMA_QTABLE], subsampling=2)
         frame = buf.getvalue()
-        # Patch APP0 (bytes [2..20]) to the firmware-expected density.
         return frame[:2] + APP0_BYTES + frame[20:]

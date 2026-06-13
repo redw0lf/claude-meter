@@ -1,13 +1,11 @@
-"""240x240 JPEG for the GeeKmagic clock's Photo-mode full-screen slot.
-
-Shows larger percentages with progress bars and reset countdowns.
-"""
+"""240x240 JPEG for the GeeKmagic clock's Photo-mode full-screen slot."""
 from __future__ import annotations
 
 import io
 
 from PIL import Image, ImageDraw
 
+from claude_meter.providers import ServiceCard
 from claude_meter.renderers import (
     COLOR_BG, COLOR_DIM, COLOR_TEXT, COLOR_TRACK, bar_color, load_font,
 )
@@ -16,8 +14,7 @@ DISPLAY_SIZE = (240, 240)
 
 
 class Photo240Renderer:
-    def render(self, five_pct: float, five_reset: str,
-               week_pct: float, week_reset: str) -> bytes:
+    def render(self, card: ServiceCard) -> bytes:
         img  = Image.new("RGB", DISPLAY_SIZE, COLOR_BG)
         draw = ImageDraw.Draw(img)
 
@@ -25,9 +22,9 @@ class Photo240Renderer:
         font_pct   = load_font(34)
         font_small = load_font(14)
 
-        draw.text((12, 8), "Claude usage", font=font_title, fill=COLOR_TEXT)
+        draw.text((12, 8), card.title, font=font_title, fill=COLOR_TEXT)
 
-        def draw_section(y: int, label: str, pct: float, reset: str):
+        def draw_section(y: int, label: str, pct: float, note: str):
             pct_clamped = max(0.0, min(pct, 999.0))
             bar_pct     = min(pct_clamped, 100.0)
             color       = bar_color(pct_clamped)
@@ -43,11 +40,10 @@ class Photo240Renderer:
             if filled > 0:
                 draw.rectangle([bar_x, bar_y, bar_x + filled, bar_y + bar_h], fill=color)
 
-            draw.text((12, bar_y + bar_h + 4), f"resets {reset}",
-                      font=font_small, fill=COLOR_DIM)
+            draw.text((12, bar_y + bar_h + 4), note, font=font_small, fill=COLOR_DIM)
 
-        draw_section(40,  "5h session", five_pct, five_reset)
-        draw_section(140, "7d weekly",  week_pct, week_reset)
+        draw_section(40,  card.row1_label, card.row1_pct, card.row1_note)
+        draw_section(140, card.row2_label, card.row2_pct, card.row2_note)
 
         buf = io.BytesIO()
         img.save(buf, format="JPEG", quality=90)

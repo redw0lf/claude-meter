@@ -10,6 +10,8 @@ from claude_meter import __version__, config, loop, service
 from claude_meter.auth import AuthError, get_access_token
 from claude_meter.usage import fetch_usage
 
+_KNOWN_SERVICES = ["claude", "copilot"]
+
 
 def _cmd_run(_args) -> int:
     cfg = config.load()
@@ -33,6 +35,18 @@ def _cmd_configure(args) -> int:
         cfg.image_dwell_sec = args.image_dwell
     if args.theme_switch:
         cfg.theme_switch = args.theme_switch
+    if args.services:
+        svcs = [s.strip() for s in args.services.split(",") if s.strip()]
+        unknown = [s for s in svcs if s not in _KNOWN_SERVICES]
+        if unknown:
+            print(f"unknown service(s): {unknown}. Known: {_KNOWN_SERVICES}",
+                  file=sys.stderr)
+            return 2
+        cfg.services = svcs
+    if args.github_token:
+        cfg.github_token = args.github_token
+    if args.copilot_org:
+        cfg.copilot_org = args.copilot_org
     p = config.save(cfg)
     print(f"wrote {p}")
     print(json.dumps(asdict(cfg), indent=2))
@@ -124,6 +138,16 @@ def build_parser() -> argparse.ArgumentParser:
                          "'firmware' only uploads the image and leaves switching "
                          "to the device's own theme auto-rotation (enable it in "
                          "the device web UI)")
+    pc.add_argument("--services",
+                    help=f"comma-separated list of services to cycle through "
+                         f"(default: claude). Known: {', '.join(_KNOWN_SERVICES)}")
+    pc.add_argument("--github-token", dest="github_token",
+                    help="GitHub PAT required for the 'copilot' service "
+                         "(scope: manage_billing:copilot or read:user)")
+    pc.add_argument("--copilot-org",  dest="copilot_org",
+                    help="GitHub org name for Copilot org-plan metrics "
+                         "(seat utilization + acceptance rate). Omit for "
+                         "individual subscription status.")
     pc.set_defaults(func=_cmd_configure)
 
     sub.add_parser("install-service",
