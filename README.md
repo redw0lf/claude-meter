@@ -130,9 +130,18 @@ claude-meter configure \
 | ----------------- | ------------ | ------- |
 | `--device-host`   | *(required)* | IP or hostname of the clock. |
 | `--mode`          | `gif80`      | `gif80` or `photo240`. See "Display modes" below. |
-| `--transport`     | `geekmagic`  | Only `geekmagic` is implemented today. |
+| `--transport`     | `geekmagic`  | `geekmagic` (original SmallTV) or `geekmagic-ultra` (SmallTV-Ultra, V9 firmware). |
 | `--push-interval` | `60`         | Seconds between fetches. Below ~30s tends to trip Anthropic's rate limiter; claude-meter honors `Retry-After` automatically but lighter polling is cleaner. |
 | `--force-push`    | `600`        | Re-push even when numbers are unchanged after this many seconds (keeps the display from looking stuck). |
+| `--image-dwell`   | `30`         | `geekmagic-ultra` only: seconds to show the usage card before restoring the weather theme (`0` = stay on the card). Only used with `--theme-switch client`. |
+| `--theme-switch`  | `client`     | `geekmagic-ultra` only: who switches the screen to the usage card. `client` flips to Photo Album after each changed upload and back after `--image-dwell` seconds. `firmware` never touches themes — claude-meter only uploads the image, and the device's own theme auto-rotation (enable it in the device's web UI and include Photo Album) brings the card into view. `firmware` is the gentlest on the device. |
+
+The device is an ESP8266-class MCU with a small heap and a handful of
+network sockets — claude-meter deliberately touches it only when the
+percentages actually change (plus a `--force-push` refresh), paces its
+requests, and closes every connection. If your clock still becomes
+unresponsive over time, prefer `--theme-switch firmware` and a larger
+`--push-interval`.
 
 Config is stored as JSON. Discovery order:
 

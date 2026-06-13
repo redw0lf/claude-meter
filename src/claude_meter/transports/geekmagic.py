@@ -53,9 +53,12 @@ class GeekmagicTransport:
         # good upload surfaces as a ChunkedEncodingError. timeout is
         # (connect, read-headers): the device can be slow to reply
         # while it commits the image to flash.
+        # Connection: close so the device's tiny LWIP socket pool frees the
+        # slot immediately instead of holding a keep-alive connection.
         resp = requests.post(
             self._url,
             files={"imageFile": (filename, body, "image/jpeg")},
+            headers={"Connection": "close"},
             timeout=(5, 15),
             stream=True,
         )

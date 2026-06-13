@@ -21,6 +21,8 @@ class Config:
     transport:   str = "geekmagic"
     push_interval_sec: int = 60
     force_push_sec:    int = 600
+    image_dwell_sec:   int = 30         # geekmagic-ultra: seconds to show image before restoring weather (0 = stay on image)
+    theme_switch:      str = "client"   # geekmagic-ultra: "client" flips themes itself; "firmware" leaves switching to the device's own auto-rotation
 
     @classmethod
     def defaults(cls) -> "Config":

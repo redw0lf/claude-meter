@@ -14,5 +14,13 @@ class Transport(Protocol):
 def get(name: str, **kwargs) -> Transport:
     if name == "geekmagic":
         from claude_meter.transports.geekmagic import GeekmagicTransport
-        return GeekmagicTransport(**kwargs)
+        return GeekmagicTransport(host=kwargs["host"], mode=kwargs.get("mode", "gif80"))
+    if name == "geekmagic-ultra":
+        from claude_meter.transports.geekmagic_ultra import GeekmagicUltraTransport
+        # pass only the kwargs this transport understands
+        return GeekmagicUltraTransport(
+            host=kwargs["host"],
+            image_dwell_sec=kwargs.get("image_dwell_sec", 30),
+            theme_switch=kwargs.get("theme_switch", "client"),
+        )
     raise ValueError(f"unknown transport: {name!r}")

@@ -29,6 +29,10 @@ def _cmd_configure(args) -> int:
         cfg.push_interval_sec = args.push_interval
     if args.force_push is not None:
         cfg.force_push_sec = args.force_push
+    if args.image_dwell is not None:
+        cfg.image_dwell_sec = args.image_dwell
+    if args.theme_switch:
+        cfg.theme_switch = args.theme_switch
     p = config.save(cfg)
     print(f"wrote {p}")
     print(json.dumps(asdict(cfg), indent=2))
@@ -105,11 +109,21 @@ def build_parser() -> argparse.ArgumentParser:
     pc = sub.add_parser("configure", help="Update config values")
     pc.add_argument("--device-host",   help="IP or hostname of the clock, e.g. 192.168.1.50")
     pc.add_argument("--mode",          choices=["gif80", "photo240"])
-    pc.add_argument("--transport",     choices=["geekmagic"])
+    pc.add_argument("--transport",     choices=["geekmagic", "geekmagic-ultra"])
     pc.add_argument("--push-interval", type=int, dest="push_interval",
                     help="seconds between pushes (default 60)")
     pc.add_argument("--force-push",    type=int, dest="force_push",
                     help="seconds between re-pushes of unchanged values (default 600)")
+    pc.add_argument("--image-dwell",   type=int, dest="image_dwell",
+                    help="geekmagic-ultra: seconds to show usage image before "
+                         "restoring weather theme (0 = stay on image, default 30)")
+    pc.add_argument("--theme-switch",  choices=["client", "firmware"],
+                    dest="theme_switch",
+                    help="geekmagic-ultra: who switches the screen to the usage "
+                         "card. 'client' (default) flips to Photo Album and back; "
+                         "'firmware' only uploads the image and leaves switching "
+                         "to the device's own theme auto-rotation (enable it in "
+                         "the device web UI)")
     pc.set_defaults(func=_cmd_configure)
 
     sub.add_parser("install-service",

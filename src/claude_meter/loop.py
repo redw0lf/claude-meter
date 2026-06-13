@@ -18,7 +18,13 @@ def run(cfg: Config) -> None:
             "--device-host <ip>` first."
         )
     renderer  = renderers.get(cfg.mode)
-    transport = transports.get(cfg.transport, host=cfg.device_host, mode=cfg.mode)
+    transport = transports.get(
+        cfg.transport,
+        host=cfg.device_host,
+        mode=cfg.mode,
+        image_dwell_sec=cfg.image_dwell_sec,
+        theme_switch=cfg.theme_switch,
+    )
 
     logged_once  = False
     last_key:   tuple | None = None
@@ -37,6 +43,9 @@ def run(cfg: Config) -> None:
             key = (int(round(five_pct)), int(round(week_pct)))
             now = time.time()
 
+            # Only touch the device when the numbers actually moved (or as a
+            # periodic refresh). The clock is an ESP8266-class MCU; hammering
+            # it with uploads/theme switches every cycle eventually hangs it.
             if last_key == key and (now - last_push_ts) < cfg.force_push_sec:
                 print(f"{_ts()} 5h {five_pct:.0f}%  7d {week_pct:.0f}%  "
                       f"unchanged, skipped", flush=True)
